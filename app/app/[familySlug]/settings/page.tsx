@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { RoleGuard, PermissionMessage } from '@/components/role-guard'
 import { createInvite } from '@/actions/invite'
 import { Plus, Settings, Users, Mail, Copy, Trash2 } from 'lucide-react'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Role } from '@prisma/client'
 
@@ -18,7 +19,7 @@ interface FamilySettingsPageProps {
 }
 
 export default async function FamilySettingsPage({ params }: FamilySettingsPageProps) {
-  const { familySlug } = params
+  const { familySlug } = await params
 
   // Get family data
   const familyResult = await getFamilyBySlug(familySlug)

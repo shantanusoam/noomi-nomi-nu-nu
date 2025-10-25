@@ -1,5 +1,5 @@
 import { getFamilyBySlug } from '@/actions/family'
-import { getPersons } from '@/actions/person'
+import { getPersonsPublic } from '@/actions/person'
 import { TreeCanvas } from '@/components/tree-canvas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TreePine } from 'lucide-react'
@@ -13,7 +13,7 @@ interface PublicSharePageProps {
 }
 
 export default async function PublicSharePage({ params }: PublicSharePageProps) {
-  const { familySlug } = params
+  const { familySlug } = await params
 
   // Get family data (public access)
   const familyResult = await getFamilyBySlug(familySlug)
@@ -24,7 +24,7 @@ export default async function PublicSharePage({ params }: PublicSharePageProps) 
   const family = familyResult.family
 
   // Get persons data (public access with privacy filtering)
-  const personsResult = await getPersons(family.id)
+  const personsResult = await getPersonsPublic(family.id)
   if (!personsResult.success || !personsResult.persons) {
     notFound()
   }

@@ -102,6 +102,59 @@ export async function deletePerson(personId: string) {
   }
 }
 
+export async function getPersonsPublic(familyId: string) {
+  try {
+    const persons = await prisma.person.findMany({
+      where: { familyId },
+      include: {
+        parentLinks: {
+          include: {
+            parent: true,
+          },
+        },
+        childLinks: {
+          include: {
+            child: true,
+          },
+        },
+        spouseLinksA: {
+          include: {
+            a: true,
+            b: true,
+          },
+        },
+        spouseLinksB: {
+          include: {
+            a: true,
+            b: true,
+          },
+        },
+      },
+      orderBy: [
+        { birthDate: { sort: 'asc', nulls: 'last' } },
+        { givenName: 'asc' },
+      ],
+    })
+
+    // Filter persons based on privacy settings for public view
+    const filteredPersons = persons.map(person => {
+      const privacy = person.privacy as any
+      
+      return {
+        ...person,
+        birthDate: privacy?.birthDate === 'public' ? person.birthDate : null,
+        deathDate: privacy?.deathDate === 'public' ? person.deathDate : null,
+        notes: privacy?.notes === 'public' ? person.notes : null,
+      }
+    })
+
+    return { success: true, persons: filteredPersons }
+  } catch (error) {
+    console.error('Error getting persons (public):', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to get persons' }
+  }
+}
+
 export async function getPersons(familyId: string) {
   try {
     await requireFamilyAccess(familyId)
@@ -119,7 +172,13 @@ export async function getPersons(familyId: string) {
             child: true,
           },
         },
-        spouseLinks: {
+        spouseLinksA: {
+          include: {
+            a: true,
+            b: true,
+          },
+        },
+        spouseLinksB: {
           include: {
             a: true,
             b: true,
@@ -154,7 +213,13 @@ export async function getPerson(personId: string) {
             child: true,
           },
         },
-        spouseLinks: {
+        spouseLinksA: {
+          include: {
+            a: true,
+            b: true,
+          },
+        },
+        spouseLinksB: {
           include: {
             a: true,
             b: true,

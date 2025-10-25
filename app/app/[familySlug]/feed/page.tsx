@@ -13,7 +13,7 @@ interface FamilyFeedPageProps {
 }
 
 export default async function FamilyFeedPage({ params }: FamilyFeedPageProps) {
-  const { familySlug } = params
+  const { familySlug } = await params
 
   // Get family data
   const familyResult = await getFamilyBySlug(familySlug)

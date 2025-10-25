@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, Users } from 'lucide-react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
 interface FamilyPeoplePageProps {
   params: {
@@ -14,7 +15,7 @@ interface FamilyPeoplePageProps {
 }
 
 export default async function FamilyPeoplePage({ params }: FamilyPeoplePageProps) {
-  const { familySlug } = params
+  const { familySlug } = await params
 
   // Get family data
   const familyResult = await getFamilyBySlug(familySlug)

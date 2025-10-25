@@ -27,9 +27,11 @@ A modern, collaborative family tree application built with Next.js 14, TypeScrip
 
 - Node.js 18+ 
 - pnpm (recommended) or npm
-- PostgreSQL database (local or Neon/Vercel Postgres)
+- Docker and Docker Compose (for local development)
 
-## 🛠️ Installation
+## 🛠️ Local Development Setup (Docker)
+
+### Quick Start
 
 1. **Clone the repository**
    ```bash
@@ -37,34 +39,45 @@ A modern, collaborative family tree application built with Next.js 14, TypeScrip
    cd familylink
    ```
 
-2. **Install dependencies**
+2. **Start Docker services**
+   ```bash
+   docker compose up -d
+   ```
+   This starts:
+   - PostgreSQL 16 database (port 5432)
+   - Mailhog email testing service (SMTP: 1025, Web UI: 8025)
+
+3. **Install dependencies**
    ```bash
    pnpm install
    ```
 
-3. **Set up environment variables**
+4. **Set up environment variables**
    ```bash
    cp .env.example .env.local
    ```
    
-   Update `.env.local` with your values:
+   The `.env.local` file is pre-configured for local Docker development:
    ```env
-   # Database
-   DATABASE_URL="postgresql://username:password@localhost:5432/familylink?schema=public"
+   # Database (PostgreSQL in Docker)
+   DATABASE_URL="postgresql://familylink:familylink@localhost:5432/familylink?schema=public"
    
    # NextAuth.js
-   NEXTAUTH_SECRET="your-secret-key-here"
+   NEXTAUTH_SECRET="dev-secret-key-change-in-production"
    NEXTAUTH_URL="http://localhost:3000"
    
-   # Email (for magic link auth)
-   EMAIL_SERVER_HOST="smtp.gmail.com"
-   EMAIL_SERVER_PORT=587
-   EMAIL_SERVER_USER="your-email@gmail.com"
-   EMAIL_SERVER_PASSWORD="your-app-password"
-   EMAIL_FROM="noreply@familylink.com"
+   # Email Configuration (Mailhog for local testing)
+   EMAIL_SERVER_HOST="localhost"
+   EMAIL_SERVER_PORT="1025"
+   EMAIL_SERVER_USER=""
+   EMAIL_SERVER_PASSWORD=""
+   EMAIL_FROM="noreply@familylink.local"
+   
+   # Authentication Mode Toggle
+   USE_EMAIL_AUTH="false"  # Set to "true" to use email auth with Mailhog
    ```
 
-4. **Set up the database**
+5. **Initialize the database**
    ```bash
    # Push the schema to your database
    pnpm db:push
@@ -73,22 +86,74 @@ A modern, collaborative family tree application built with Next.js 14, TypeScrip
    pnpm db:seed
    ```
 
-5. **Start the development server**
+6. **Start the development server**
    ```bash
    pnpm dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🗄️ Database Setup
+### Authentication Modes
+
+FamilyLink supports two authentication modes for local development:
+
+#### Development Mode (Default)
+- Set `USE_EMAIL_AUTH="false"` in `.env.local`
+- Simple email-based authentication (no email verification required)
+- Enter any email address to sign in
+- Perfect for rapid development and testing
+
+#### Email Testing Mode
+- Set `USE_EMAIL_AUTH="true"` in `.env.local`
+- Uses Mailhog for email testing
+- Access Mailhog UI at [http://localhost:8025](http://localhost:8025)
+- All emails are captured locally for testing
+
+### Docker Services
+
+#### PostgreSQL Database
+- **Host**: localhost
+- **Port**: 5432
+- **Database**: familylink
+- **Username**: familylink
+- **Password**: familylink
+- **Persistent Volume**: `postgres_data`
+
+#### Mailhog Email Testing
+- **SMTP Server**: localhost:1025
+- **Web UI**: [http://localhost:8025](http://localhost:8025)
+- **Purpose**: Captures all outgoing emails for testing
+
+### Useful Docker Commands
+
+```bash
+# Start services
+docker compose up -d
+
+# Stop services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# Restart services
+docker compose restart
+
+# Remove all data (reset database)
+docker compose down -v
+```
+
+## 🗄️ Alternative Database Setup
+
+If you prefer not to use Docker, you can set up PostgreSQL manually:
 
 ### Option 1: Local PostgreSQL
 1. Install PostgreSQL locally
 2. Create a database named `familylink`
 3. Update `DATABASE_URL` in `.env.local`
 
-### Option 2: Neon (Recommended)
+### Option 2: Neon (Cloud)
 1. Sign up at [neon.tech](https://neon.tech)
 2. Create a new project
 3. Copy the connection string to `DATABASE_URL`

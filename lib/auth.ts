@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
 import { Role } from '@prisma/client'
 

@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: familylink-postgres
+    environment:
+      POSTGRES_DB: familylink
+      POSTGRES_USER: familylink
+      POSTGRES_PASSWORD: familylink
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U familylink -d familylink"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: familylink-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

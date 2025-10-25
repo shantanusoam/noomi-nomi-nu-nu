@@ -145,8 +145,11 @@ function buildLayoutPersons(persons: PersonWithRelations[]): LayoutPerson[] {
     // Children
     person.children = person.childLinks.map(link => link.childId)
     
-    // Spouses
-    person.spouses = person.spouseLinks.map(link => 
+    // Spouses - combine both spouseLinksA and spouseLinksB
+    const spouseLinksA = person.spouseLinksA || []
+    const spouseLinksB = person.spouseLinksB || []
+    const allSpouseLinks = [...spouseLinksA, ...spouseLinksB]
+    person.spouses = allSpouseLinks.map(link => 
       link.aId === person.id ? link.bId : link.aId
     )
   }

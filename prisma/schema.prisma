@@ -75,7 +75,8 @@ model Person {
   family       Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
   parentLinks  Relationship[] @relation("ParentLinks")
   childLinks   Relationship[] @relation("ChildLinks")
-  spouseLinks  Spouse[]       @relation("SpouseLinks")
+  spouseLinksA Spouse[]       @relation("SpouseLinksA")
+  spouseLinksB Spouse[]       @relation("SpouseLinksB")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -98,8 +99,8 @@ model Spouse {
   id        String  @id @default(cuid())
   aId       String
   bId       String
-  a         Person  @relation("SpouseLinks", fields: [aId], references: [id], onDelete: Cascade)
-  b         Person  @relation("SpouseLinks", fields: [bId], references: [id], onDelete: Cascade)
+  a         Person  @relation("SpouseLinksA", fields: [aId], references: [id], onDelete: Cascade)
+  b         Person  @relation("SpouseLinksB", fields: [bId], references: [id], onDelete: Cascade)
   startDate DateTime?
   endDate   DateTime?
   createdAt DateTime @default(now())

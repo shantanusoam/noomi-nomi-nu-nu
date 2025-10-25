@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Plus, Search, Download, Maximize } from 'lucide-react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
 interface FamilyTreePageProps {
   params: {
@@ -13,7 +14,7 @@ interface FamilyTreePageProps {
 }
 
 export default async function FamilyTreePage({ params }: FamilyTreePageProps) {
-  const { familySlug } = params
+  const { familySlug } = await params
 
   // Get family data
   const familyResult = await getFamilyBySlug(familySlug)

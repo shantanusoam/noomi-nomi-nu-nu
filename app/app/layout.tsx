@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth-config'
 import { getUserFamilies } from '@/lib/auth'
 import { AppSidebar } from '@/components/app-sidebar'
 
