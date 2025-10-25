@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  image        String?
+  emailVerified DateTime?
+  accounts     Account[]
+  sessions     Session[]
+  memberships  Membership[]
+  memories     Memory[]        @relation("MemoryAuthor")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Family {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  members      Membership[]
+  persons      Person[]
+  invites      Invite[]
+  memories     Memory[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("families")
+}
+
+model Membership {
+  id        String  @id @default(cuid())
+  userId    String
+  familyId  String
+  role      Role    @default(VIEWER)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family    Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, familyId])
+  @@map("memberships")
+}
+
+enum Role { 
+  OWNER 
+  EDITOR 
+  VIEWER 
+}
+
+model Person {
+  id           String   @id @default(cuid())
+  familyId     String
+  givenName    String
+  middleName   String?
+  familyName   String?
+  gender       String?  // keep open text for inclusivity
+  birthDate    DateTime?
+  deathDate    DateTime?
+  avatarUrl    String?
+  notes        String?
+  privacy      Json     @default("{\"birthDate\":\"family\",\"deathDate\":\"family\",\"notes\":\"family\"}")
+  family       Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  parentLinks  Relationship[] @relation("ParentLinks")
+  childLinks   Relationship[] @relation("ChildLinks")
+  spouseLinks  Spouse[]       @relation("SpouseLinks")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("persons")
+}
+
+model Relationship {
+  id        String  @id @default(cuid())
+  parentId  String
+  childId   String
+  parent    Person  @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
+  child     Person  @relation("ChildLinks", fields: [childId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([parentId, childId])
+  @@map("relationships")
+}
+
+model Spouse {
+  id        String  @id @default(cuid())
+  aId       String
+  bId       String
+  a         Person  @relation("SpouseLinks", fields: [aId], references: [id], onDelete: Cascade)
+  b         Person  @relation("SpouseLinks", fields: [bId], references: [id], onDelete: Cascade)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+
+  @@unique([aId, bId])
+  @@map("spouses")
+}
+
+model Memory {
+  id        String  @id @default(cuid())
+  familyId  String
+  authorId  String
+  title     String
+  body      String
+  imageUrl  String?
+  taggedPersonIds String[] // denormalized for speed
+  family    Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  author    User    @relation("MemoryAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("memories")
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  familyId  String
+  email     String
+  role      Role     @default(VIEWER)
+  token     String   @unique
+  expiresAt DateTime
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("invites")
+}
+
+// NextAuth.js models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
