@@ -65,10 +65,6 @@ export default async function FamilyTreePage({ params }: FamilyTreePageProps) {
       <div className="flex-1 bg-gray-50">
         <TreeCanvas 
           persons={personsResult.persons}
-          onPersonClick={(person) => {
-            // Handle person click - could open a side panel
-            console.log('Person clicked:', person.givenName)
-          }}
           className="h-full"
         />
       </div>

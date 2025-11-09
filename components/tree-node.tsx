@@ -1,3 +1,5 @@
+'use client'
+
 import { memo, useCallback } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
 import { Person } from '@prisma/client'

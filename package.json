@@ -4,6 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "start:full": "./start.sh",
+    "stop:full": "./stop.sh",
+    "start:docker": "docker compose up -d",
+    "stop:docker": "docker compose down",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

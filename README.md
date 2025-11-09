@@ -31,7 +31,30 @@ A modern, collaborative family tree application built with Next.js 14, TypeScrip
 
 ## 🛠️ Local Development Setup (Docker)
 
-### Quick Start
+### 🚀 Quick Start (One Command)
+
+The easiest way to start everything at once:
+
+```bash
+pnpm install          # First time only
+pnpm start:full       # Starts Docker, DB, and Next.js in one command!
+```
+
+This single command will:
+- ✅ Start Docker services (PostgreSQL & Mailhog)
+- ✅ Wait for services to be ready
+- ✅ Initialize database schema if needed
+- ✅ Seed database with demo data if needed
+- ✅ Start Next.js development server
+
+**Stop everything:**
+```bash
+pnpm stop:full        # Stops all Docker services
+```
+
+### Manual Setup (Step by Step)
+
+If you prefer to set up manually or need more control:
 
 1. **Clone the repository**
    ```bash
@@ -39,20 +62,12 @@ A modern, collaborative family tree application built with Next.js 14, TypeScrip
    cd familylink
    ```
 
-2. **Start Docker services**
-   ```bash
-   docker compose up -d
-   ```
-   This starts:
-   - PostgreSQL 16 database (port 5432)
-   - Mailhog email testing service (SMTP: 1025, Web UI: 8025)
-
-3. **Install dependencies**
+2. **Install dependencies**
    ```bash
    pnpm install
    ```
 
-4. **Set up environment variables**
+3. **Set up environment variables**
    ```bash
    cp .env.example .env.local
    ```
@@ -76,6 +91,15 @@ A modern, collaborative family tree application built with Next.js 14, TypeScrip
    # Authentication Mode Toggle
    USE_EMAIL_AUTH="false"  # Set to "true" to use email auth with Mailhog
    ```
+
+4. **Start Docker services manually**
+   ```bash
+   pnpm start:docker
+   # Or: docker compose up -d
+   ```
+   This starts:
+   - PostgreSQL 16 database (port 5432)
+   - Mailhog email testing service (SMTP: 1025, Web UI: 8025)
 
 5. **Initialize the database**
    ```bash
@@ -194,6 +218,49 @@ Every family tree has a public share link:
 - Read-only access for non-members
 - Privacy-filtered information (respects field-level privacy settings)
 - Example: `/share/the-demo-family`
+
+## 📜 Available Commands
+
+### Full Stack Commands (One-Command Startup)
+```bash
+pnpm start:full      # Start everything: Docker + DB + Next.js
+pnpm stop:full       # Stop all Docker services
+```
+
+### Docker Commands
+```bash
+pnpm start:docker    # Start Docker services (PostgreSQL & Mailhog)
+pnpm stop:docker     # Stop Docker services
+```
+
+### Development Commands
+```bash
+pnpm dev             # Start Next.js development server
+pnpm build           # Build for production
+pnpm start           # Start production server
+pnpm lint            # Run ESLint
+pnpm typecheck       # Run TypeScript type checking
+pnpm format          # Format code with Prettier
+```
+
+### Database Commands
+```bash
+pnpm db:push         # Push Prisma schema to database
+pnpm db:seed         # Seed database with demo data
+pnpm db:studio       # Open Prisma Studio (http://localhost:5555)
+pnpm db:migrate      # Create and apply database migration
+```
+
+### Service URLs
+Once everything is running:
+- **Application**: http://localhost:3000
+- **Mailhog UI**: http://localhost:8025
+- **Prisma Studio**: http://localhost:5555
+- **PostgreSQL**: localhost:5432
+
+### Test Credentials
+- **Email**: `demo@familylink.com`
+- **Family**: `the-demo-family`
 
 ## 📁 Project Structure
 

@@ -14,6 +14,7 @@ const providers = useEmailAuth
           host: process.env.EMAIL_SERVER_HOST,
           port: Number(process.env.EMAIL_SERVER_PORT),
           secure: false,
+          auth: false,
         },
         from: process.env.EMAIL_FROM,
       }),
@@ -76,5 +77,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: useEmailAuth ? 'database' : 'jwt',
   },
   trustHost: true, // Allow localhost for development
-  secret: process.env.NEXTAUTH_SECRET,
 })

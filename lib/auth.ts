@@ -27,7 +27,7 @@ export async function getUserFamilyMembership(familyId: string, userId: string) 
 }
 
 export async function getUserFamilies(userId: string) {
-  return await prisma.membership.findMany({
+  const memberships = await prisma.membership.findMany({
     where: { userId },
     include: {
       family: true,
@@ -38,6 +38,29 @@ export async function getUserFamilies(userId: string) {
       },
     },
   })
+  
+  // Get counts for each family
+  const familiesWithCounts = await Promise.all(
+    memberships.map(async (membership) => {
+      const [personCount, memoryCount] = await Promise.all([
+        prisma.person.count({ where: { familyId: membership.familyId } }),
+        prisma.memory.count({ where: { familyId: membership.familyId } }),
+      ])
+      
+      return {
+        ...membership,
+        family: {
+          ...membership.family,
+          _count: {
+            persons: personCount,
+            memories: memoryCount,
+          },
+        },
+      }
+    })
+  )
+  
+  return familiesWithCounts
 }
 
 export async function requireAuth() {

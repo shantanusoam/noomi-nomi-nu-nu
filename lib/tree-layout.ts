@@ -24,9 +24,11 @@ export interface TreeLayout {
 }
 
 interface PersonWithRelations extends Person {
-  parentLinks: Relationship[]
-  childLinks: Relationship[]
-  spouseLinks: Spouse[]
+  parentLinks?: Relationship[]
+  childLinks?: Relationship[]
+  spouseLinks?: Spouse[]
+  spouseLinksA?: Spouse[]
+  spouseLinksB?: Spouse[]
 }
 
 interface LayoutPerson extends Person {
@@ -51,6 +53,8 @@ export function computeTreeLayout(persons: PersonWithRelations[]): TreeLayout {
   const layoutPersons = buildLayoutPersons(persons)
   const nodes: TreeNode[] = []
   const edges: TreeEdge[] = []
+  const edgeIds = new Set<string>()
+  const spouseConnectorsAdded = new Set<string>()
 
   // Group persons by generation
   const generations = groupByGeneration(layoutPersons)
@@ -74,14 +78,23 @@ export function computeTreeLayout(persons: PersonWithRelations[]): TreeLayout {
         position: { x: nodeX + i * nodeSpacing, y: nodeY },
       })
 
-      // Add spouse connector nodes for married couples
+      // Add spouse connector nodes for married couples (only once per pair)
       for (const spouseId of person.spouses) {
+        // Skip if we've already processed this spouse pair
+        const spousePairId = person.id < spouseId 
+          ? `${person.id}-${spouseId}` 
+          : `${spouseId}-${person.id}`
+        
+        if (spouseConnectorsAdded.has(spousePairId)) {
+          continue
+        }
+
         const spouse = layoutPersons.find(p => p.id === spouseId)
-        if (spouse && spouse.generation === person.generation) {
+        if (spouse && spouse.generation === person.generation && person.id !== spouseId) {
           const spouseNode = nodes.find(n => n.id === spouseId)
           if (spouseNode) {
             // Add spouse connector between the two nodes
-            const connectorId = `spouse-${person.id}-${spouseId}`
+            const connectorId = `spouse-${spousePairId}`
             const connectorX = (person.position?.x || 0) + (spouseNode.position.x - (person.position?.x || 0)) / 2
             
             nodes.push({
@@ -96,13 +109,19 @@ export function computeTreeLayout(persons: PersonWithRelations[]): TreeLayout {
               position: { x: connectorX, y: nodeY - 30 },
             })
 
-            // Add spouse edges
-            edges.push({
-              id: `spouse-${person.id}-${spouseId}`,
-              source: person.id,
-              target: spouseId,
-              type: 'spouse',
-            })
+            // Add spouse edge (only once per pair)
+            const edgeId = `spouse-${spousePairId}`
+            if (!edgeIds.has(edgeId)) {
+              edges.push({
+                id: edgeId,
+                source: person.id,
+                target: spouseId,
+                type: 'spouse',
+              })
+              edgeIds.add(edgeId)
+            }
+            
+            spouseConnectorsAdded.add(spousePairId)
           }
         }
       }
@@ -111,15 +130,24 @@ export function computeTreeLayout(persons: PersonWithRelations[]): TreeLayout {
     nodeY += generationHeight
   }
 
-  // Add parent-child edges
+  // Add parent-child edges (prevent self-referential and duplicates)
   for (const person of layoutPersons) {
     for (const childId of person.children) {
-      edges.push({
-        id: `parent-child-${person.id}-${childId}`,
-        source: person.id,
-        target: childId,
-        type: 'parent-child',
-      })
+      // Skip self-referential edges
+      if (person.id === childId) {
+        continue
+      }
+      
+      const edgeId = `parent-child-${person.id}-${childId}`
+      if (!edgeIds.has(edgeId)) {
+        edges.push({
+          id: edgeId,
+          source: person.id,
+          target: childId,
+          type: 'parent-child',
+        })
+        edgeIds.add(edgeId)
+      }
     }
   }
 
@@ -139,19 +167,40 @@ function buildLayoutPersons(persons: PersonWithRelations[]): LayoutPerson[] {
 
   // Build adjacency lists
   for (const person of layoutPersons) {
-    // Parents
-    person.parents = person.parentLinks.map(link => link.parentId)
+    // Parents (deduplicated)
+    const parentIds = new Set<string>()
+    for (const link of person.parentLinks || []) {
+      // Skip self-referential parent links
+      if (link.parentId !== person.id) {
+        parentIds.add(link.parentId)
+      }
+    }
+    person.parents = Array.from(parentIds)
     
-    // Children
-    person.children = person.childLinks.map(link => link.childId)
+    // Children (deduplicated)
+    const childIds = new Set<string>()
+    for (const link of person.childLinks || []) {
+      // Skip self-referential child links
+      if (link.childId !== person.id) {
+        childIds.add(link.childId)
+      }
+    }
+    person.children = Array.from(childIds)
     
-    // Spouses - combine both spouseLinksA and spouseLinksB
+    // Spouses - combine both spouseLinksA and spouseLinksB and deduplicate
     const spouseLinksA = person.spouseLinksA || []
     const spouseLinksB = person.spouseLinksB || []
-    const allSpouseLinks = [...spouseLinksA, ...spouseLinksB]
-    person.spouses = allSpouseLinks.map(link => 
-      link.aId === person.id ? link.bId : link.aId
-    )
+    const spouseLinks = person.spouseLinks || []
+    const allSpouseLinks = [...spouseLinksA, ...spouseLinksB, ...spouseLinks]
+    const spouseIds = new Set<string>()
+    for (const link of allSpouseLinks) {
+      const spouseId = link.aId === person.id ? link.bId : link.aId
+      // Skip self-referential spouse links
+      if (spouseId !== person.id) {
+        spouseIds.add(spouseId)
+      }
+    }
+    person.spouses = Array.from(spouseIds)
   }
 
   // Compute depths using BFS from roots (persons with no parents)

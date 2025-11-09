@@ -85,10 +85,6 @@ export default async function PublicSharePage({ params }: PublicSharePageProps) 
             <div className="h-[600px] w-full">
               <TreeCanvas 
                 persons={publicPersons}
-                onPersonClick={(person) => {
-                  // In public view, we could show limited info
-                  console.log('Person clicked:', person.givenName)
-                }}
               />
             </div>
           </CardContent>

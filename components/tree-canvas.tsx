@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback, useMemo } from 'react'
 import {
   ReactFlow,
@@ -20,46 +22,71 @@ import { nodeTypes } from './tree-node'
 
 interface TreeCanvasProps {
   persons: Array<Person & {
-    parentLinks: Relationship[]
-    childLinks: Relationship[]
-    spouseLinks: Spouse[]
+    parentLinks?: Relationship[]
+    childLinks?: Relationship[]
+    spouseLinks?: Spouse[]
+    spouseLinksA?: Spouse[]
+    spouseLinksB?: Spouse[]
   }>
   onPersonClick?: (person: Person) => void
   className?: string
 }
 
+
 function TreeCanvasInner({ persons, onPersonClick, className }: TreeCanvasProps) {
   // Convert persons to React Flow format
-  const { nodes: layoutNodes, edges: layoutEdges } = useMemo(() => {
-    return computeTreeLayout(persons)
-  }, [persons])
+  const { nodes: layoutNodes, edges: styledEdges } = useMemo(() => {
+    const layout = computeTreeLayout(persons)
+    // Add onPersonClick to person node data
+    const nodesWithClickHandler = layout.nodes.map(node => {
+      if (node.type === 'person' && node.data.person) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            onPersonClick,
+          },
+        }
+      }
+      return node
+    })
+    
+    // Apply styles to edges based on their type
+    const edgesWithStyles = layout.edges.map(edge => {
+      if (edge.type === 'parent-child') {
+        return {
+          ...edge,
+          style: { stroke: '#374151', strokeWidth: 2 },
+          markerEnd: {
+            type: 'arrowclosed' as const,
+            color: '#374151',
+          },
+        }
+      } else if (edge.type === 'spouse') {
+        return {
+          ...edge,
+          style: { stroke: '#e5e7eb', strokeWidth: 1, strokeDasharray: '5,5' },
+        }
+      }
+      return edge
+    })
+    
+    return { nodes: nodesWithClickHandler, edges: edgesWithStyles }
+  }, [persons, onPersonClick])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutEdges)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(styledEdges)
 
   // Update nodes when layout changes
   useMemo(() => {
     setNodes(layoutNodes)
-    setEdges(layoutEdges)
-  }, [layoutNodes, layoutEdges, setNodes, setEdges])
+    setEdges(styledEdges)
+  }, [layoutNodes, styledEdges, setNodes, setEdges])
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   )
-
-  const edgeTypes = useMemo(() => ({
-    'parent-child': {
-      style: { stroke: '#374151', strokeWidth: 2 },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: '#374151',
-      },
-    },
-    spouse: {
-      style: { stroke: '#e5e7eb', strokeWidth: 1, strokeDasharray: '5,5' },
-    },
-  }), [])
 
   const defaultEdgeOptions = useMemo(() => ({
     animated: false,
@@ -74,7 +101,6 @@ function TreeCanvasInner({ persons, onPersonClick, className }: TreeCanvasProps)
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
         attributionPosition="bottom-left"
