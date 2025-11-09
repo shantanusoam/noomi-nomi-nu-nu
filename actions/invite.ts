@@ -6,6 +6,7 @@ import { createInviteSchema } from '@/lib/validations'
 import { Role } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { randomBytes } from 'crypto'
+import { sendInviteEmail } from '@/lib/emails'
 
 export async function createInvite(familyId: string, formData: FormData) {
   try {
@@ -56,6 +57,14 @@ export async function createInvite(familyId: string, formData: FormData) {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7) // Expires in 7 days
 
+    // Get family and inviter info for email
+    const family = await prisma.family.findUnique({
+      where: { id: familyId },
+      select: { name: true },
+    })
+
+    const inviter = await requireAuth()
+
     const invite = await prisma.invite.create({
       data: {
         ...validatedData,
@@ -64,8 +73,27 @@ export async function createInvite(familyId: string, formData: FormData) {
       },
     })
 
+    // Send invite email (don't fail if email sending fails)
+    const emailResult = await sendInviteEmail({
+      inviteEmail: validatedData.email,
+      familyName: family?.name || 'a family',
+      inviteToken: token,
+      role: validatedData.role,
+      inviterName: inviter.name || undefined,
+    })
+
+    if (!emailResult.success) {
+      console.error('Failed to send invite email:', emailResult.error)
+      // Continue anyway - invite is created, user can still use the link
+    }
+
     revalidatePath(`/app/${familyId}/settings`)
-    return { success: true, invite }
+    return { 
+      success: true, 
+      invite,
+      emailSent: emailResult.success,
+      emailError: emailResult.error,
+    }
   } catch (error) {
     console.error('Error creating invite:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Failed to create invite' }

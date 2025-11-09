@@ -160,6 +160,11 @@ export async function joinFamilyByInvite(token: string) {
       throw new Error('Invite has expired')
     }
 
+    // Verify that the user's email matches the invite email
+    if (user.email.toLowerCase() !== invite.email.toLowerCase()) {
+      throw new Error('This invitation was sent to a different email address')
+    }
+
     // Check if user is already a member
     const existingMembership = await prisma.membership.findUnique({
       where: {

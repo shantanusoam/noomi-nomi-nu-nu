@@ -63,12 +63,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         // For email auth, user is available; for credentials, use token
         session.user.id = user?.id || token?.sub || ''
+        // Ensure email is set (should always be present, but be defensive)
+        if (!session.user.email && user?.email) {
+          session.user.email = user.email
+        }
+        if (!session.user.email && token?.email) {
+          session.user.email = token.email as string
+        }
       }
       return session
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         token.sub = user.id
+        if (user.email) {
+          token.email = user.email
+        }
+      }
+      // For credentials provider, email might be in account
+      if (account && account.type === 'credentials' && !token.email) {
+        // Try to get email from account metadata if available
+        if (account.providerAccountId) {
+          token.email = account.providerAccountId
+        }
       }
       return token
     },

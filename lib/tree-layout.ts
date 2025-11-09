@@ -112,12 +112,12 @@ export function computeTreeLayout(persons: PersonWithRelations[]): TreeLayout {
             // Add spouse edge (only once per pair)
             const edgeId = `spouse-${spousePairId}`
             if (!edgeIds.has(edgeId)) {
-              edges.push({
+            edges.push({
                 id: edgeId,
-                source: person.id,
-                target: spouseId,
-                type: 'spouse',
-              })
+              source: person.id,
+              target: spouseId,
+              type: 'spouse',
+            })
               edgeIds.add(edgeId)
             }
             
@@ -140,12 +140,12 @@ export function computeTreeLayout(persons: PersonWithRelations[]): TreeLayout {
       
       const edgeId = `parent-child-${person.id}-${childId}`
       if (!edgeIds.has(edgeId)) {
-        edges.push({
+      edges.push({
           id: edgeId,
-          source: person.id,
-          target: childId,
-          type: 'parent-child',
-        })
+        source: person.id,
+        target: childId,
+        type: 'parent-child',
+      })
         edgeIds.add(edgeId)
       }
     }
